@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(dump_runner CXX)
 
+set(CMAKE_CXX_STANDARD 23)
+
 # Add this: Option for kstuff default (0=disabled, 1=enabled)
 option(KSTUFF_DEFAULT "Default kstuff value" 0)
 

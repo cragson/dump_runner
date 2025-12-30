@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <string>
+#include <format>
 
 #include <sys/_iovec.h>
 #include <sys/mount.h>
@@ -79,39 +81,28 @@ int mount_nullfs(const char *src, const char *dst)
   return nmount(iov, IOVEC_SIZE(iov), 0);
 }
 
-int endswith(const char *string, const char *suffix)
+int chmod_bins(const std::string& path)
 {
-  size_t suffix_len = strlen(suffix);
-  size_t string_len = strlen(string);
+  auto buf = std::string();
+  buf.resize( PATH_MAX + 1 );
 
-  if (string_len < suffix_len)
-  {
-    return 0;
-  }
-
-  return strncmp(string + string_len - suffix_len, suffix, suffix_len) != 0;
-}
-
-int chmod_bins(const char *path)
-{
-  char buf[PATH_MAX + 1];
   struct dirent *entry;
   struct stat st;
   DIR *dir;
 
-  if (stat(path, &st) != 0)
+  if (stat(path.c_str(), &st) != 0)
   {
     return -1;
   }
 
-  if (endswith(path, ".prx") || endswith(path, ".sprx") || endswith(path, "/eboot.bin"))
+  if( path.ends_with(".prx") || path.ends_with(".sprx") || path.ends_with("/eboot.bin"))
   {
-    chmod(path, 0755);
+    chmod(path.c_str(), 0755);
   }
 
   if (S_ISDIR(st.st_mode))
   {
-    dir = opendir(path);
+    dir = opendir(path.c_str());
     while (1)
     {
       entry = readdir(dir);
@@ -120,12 +111,14 @@ int chmod_bins(const char *path)
         break;
       }
 
-      if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
+      const auto d_name = std::string( entry->d_name );
+
+      if( d_name == "." || d_name == "..")
       {
         continue;
       }
 
-      sprintf(buf, "%s/%s", path, entry->d_name);
+      buf = std::format("{}/{}", path, d_name );
       chmod_bins(buf);
     }
 
